@@ -38,6 +38,11 @@ export default function AddProduct() {
         try {
             setErrorMessage("");
 
+            if (form.images.length === 0) {
+                setErrorMessage("Select at least one product image before submitting.");
+                return;
+            }
+
             const formData = new FormData();
 
             formData.append("title", form.title);

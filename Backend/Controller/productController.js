@@ -68,6 +68,7 @@ export const createProduct = async (req, res) => {
         }
 
         const uploadedImages = [];
+        let lastUploadError = null;
 
         // multer.memoryStorage() gives Buffer in file.buffer
         // req.files should be populated by upload.array("images", 5)
@@ -103,6 +104,7 @@ export const createProduct = async (req, res) => {
                     console.warn("Cloudinary upload returned no secure_url:", uploadedFile);
                 }
             } catch (uploadError) {
+                lastUploadError = uploadError;
                 console.warn(
                     "Cloudinary upload failed, continuing without this image:",
                     uploadError?.message || uploadError
@@ -110,13 +112,22 @@ export const createProduct = async (req, res) => {
             }
         }
 
-        // If nothing uploaded, fail fast so you notice the issue (instead of saving images: [])
+        // If nothing uploaded, fail fast so you notice the issue instead of saving images: [].
         if (uploadedImages.length === 0) {
-            return res.status(400).json({
-                message: "Image upload failed: no images were uploaded to Cloudinary.",
+            const filesReceived = Array.isArray(req.files) ? req.files.length : 0;
+            const uploadMessage = lastUploadError?.message ||
+                (filesReceived === 0
+                    ? "No images were received. Select at least one image."
+                    : "Cloudinary rejected the image upload.");
+
+            return res.status(filesReceived === 0 ? 400 : 502).json({
+                message: uploadMessage,
                 filesReceived: Array.isArray(req.files) ? req.files.length : 0,
-                cloudinaryConfigured: !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET),
-                uploadError: "Cloudinary rejected the upload. Check the backend Cloudinary environment variables and upload response logs.",
+                cloudinaryConfigured: Boolean(
+                    process.env.CLOUDINARY_CLOUD_NAME &&
+                    process.env.CLOUDINARY_API_KEY &&
+                    process.env.CLOUDINARY_API_SECRET
+                ),
             });
         }
 
