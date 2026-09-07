@@ -227,12 +227,21 @@ export const updateProduct = async (req, res) => {
             });
         }
 
+        const parsedPrice = Number(req.body.price);
+        const parsedStock = Number(req.body.stock || 0);
+
+        if (!Number.isFinite(parsedPrice) || parsedPrice < 0 || !Number.isFinite(parsedStock) || parsedStock < 0) {
+            return res.status(400).json({
+                message: "Price and stock must be valid non-negative numbers.",
+            });
+        }
+
         const update = {
             title: req.body.title,
             description: req.body.description,
-            price: Number(req.body.price),
+            price: parsedPrice,
             category: req.body.category,
-            stock: Number(req.body.stock || 0),
+            stock: parsedStock,
         };
 
         if (Array.isArray(req.files) && req.files.length > 0) {

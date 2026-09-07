@@ -87,9 +87,7 @@ export default function EditProduct() {
         formData.append("existingImage", form.image);
       }
 
-      await api.put(`/admin/update/${id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await api.put(`/admin/update/${id}`, formData);
       alert("Product updated!");
       navigate("/admin/products");
     } catch (error) {
