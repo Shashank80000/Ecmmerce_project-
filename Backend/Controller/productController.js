@@ -112,12 +112,11 @@ export const createProduct = async (req, res) => {
 
         // If nothing uploaded, fail fast so you notice the issue (instead of saving images: [])
         if (uploadedImages.length === 0) {
-            // Helpful debug for Cloudinary misconfiguration (env vars not loaded / wrong keys)
             return res.status(400).json({
                 message: "Image upload failed: no images were uploaded to Cloudinary.",
                 filesReceived: Array.isArray(req.files) ? req.files.length : 0,
                 cloudinaryConfigured: !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET),
-                cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME || null,
+                uploadError: "Cloudinary rejected the upload. Check the backend Cloudinary environment variables and upload response logs.",
             });
         }
 
