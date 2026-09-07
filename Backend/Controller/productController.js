@@ -221,23 +221,36 @@ export const getAllProducts = async (req, res) => {
 // Update product
 export const updateProduct = async (req, res) => {
     try {
-        // Debug: surface helpful request info when troubleshooting multipart issues
-        console.debug("[createProduct] content-type:", req.headers && req.headers["content-type"]);
-        console.debug("[createProduct] req.body type:", typeof req.body, "keys:", req.body && Object.keys(req.body));
-        console.debug("[createProduct] req.files:", Array.isArray(req.files) ? req.files.length : typeof req.files);
-
         if (!req.body || Object.keys(req.body).length === 0) {
             return res.status(400).json({
-                message: "Empty form body. Ensure the request is sent as multipart/form-data and multer upload middleware is applied.",
-                contentType: req.headers && req.headers["content-type"] || null
+                message: "Product details are required."
             });
+        }
+
+        const update = {
+            title: req.body.title,
+            description: req.body.description,
+            price: Number(req.body.price),
+            category: req.body.category,
+            stock: Number(req.body.stock || 0),
+        };
+
+        if (Array.isArray(req.files) && req.files.length > 0) {
+            const uploadedFile = await uploadBufferToCloudinary(req.files[0]);
+            update.images = uploadedFile.secure_url ? [uploadedFile.secure_url] : [];
+        } else {
+            update.images = req.body.existingImage ? [req.body.existingImage] : [];
         }
 
         const product = await Product.findByIdAndUpdate(
             req.params.id,
-            req.body,
-            { new: true }
+            update,
+            { new: true, runValidators: true }
         );
+
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
+        }
 
         res.json({
             message: "Product updated successfully",

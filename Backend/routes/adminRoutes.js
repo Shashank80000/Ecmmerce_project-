@@ -27,7 +27,7 @@ router.post('/add', verifyAdmin, upload.array('images', 5), createProduct);
 router.get('/',verifyAdmin, getAllProducts); 
 
 // router to update product
-router.put('/update/:id', verifyAdmin, updateProduct);
+router.put('/update/:id', verifyAdmin, upload.array('images', 1), updateProduct);
 
 // router to delete product
 router.delete('/delete/:id', verifyAdmin, deleteProduct);
