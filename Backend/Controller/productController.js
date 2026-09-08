@@ -245,10 +245,20 @@ export const updateProduct = async (req, res) => {
         };
 
         if (Array.isArray(req.files) && req.files.length > 0) {
-            const uploadedFile = await uploadBufferToCloudinary(req.files[0]);
-            update.images = uploadedFile.secure_url ? [uploadedFile.secure_url] : [];
+            const uploadedFiles = await Promise.all(
+                req.files.map((file) => uploadBufferToCloudinary(file))
+            );
+            const uploadedImages = uploadedFiles
+                .map((file) => file.secure_url)
+                .filter(Boolean);
+            const existingImages = Array.isArray(req.body.existingImage)
+                ? req.body.existingImage
+                : [req.body.existingImage].filter(Boolean);
+            update.images = [...existingImages, ...uploadedImages];
         } else {
-            update.images = req.body.existingImage ? [req.body.existingImage] : [];
+            update.images = Array.isArray(req.body.existingImage)
+                ? req.body.existingImage
+                : [req.body.existingImage].filter(Boolean);
         }
 
         const product = await Product.findByIdAndUpdate(

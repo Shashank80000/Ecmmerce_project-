@@ -12,11 +12,13 @@ export default function EditProduct() {
     description: "",
     category: "",
     image: "",
+    images: [],
     stock: "",
   });
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [imageFile, setImageFile] = useState(null);
+  const [imageFiles, setImageFiles] = useState([]);
 
   const loadProduct = async () => {
     try {
@@ -39,9 +41,10 @@ export default function EditProduct() {
         description: product.description || "",
         category: product.category || "",
         image: product.images?.[0] || "",
+        images: product.images || [],
         stock: product.stock ?? "",
       });
-      setImageFile(null);
+      setImageFiles([]);
     } catch (error) {
       setErrorMessage(error.response?.data?.message || error.message || "Unable to load product");
     } finally {
@@ -58,20 +61,31 @@ export default function EditProduct() {
   };
 
   const handleImageChange = (e) => {
-    const file = e.target.files?.[0] || null;
-    setImageFile(file);
-    if (file) {
-      setForm((current) => ({ ...current, image: URL.createObjectURL(file) }));
+    const files = Array.from(e.target.files || []);
+    const nextFiles = [...imageFiles, ...files].slice(0, 5);
+    setImageFiles(nextFiles);
+    if (nextFiles.length > 0) {
+      setForm((current) => ({
+        ...current,
+        image: current.image || URL.createObjectURL(nextFiles[0]),
+        images: [
+          ...(current.images || []),
+          ...files.slice(0, 5 - imageFiles.length).map((file) => URL.createObjectURL(file)),
+        ],
+      }));
     }
+    e.target.value = "";
   };
 
   const removeImage = () => {
-    setImageFile(null);
-    setForm((current) => ({ ...current, image: "" }));
+    setImageFiles([]);
+    setForm((current) => ({ ...current, image: "", images: [] }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
+    setSaving(true);
 
     try {
       const formData = new FormData();
@@ -81,17 +95,22 @@ export default function EditProduct() {
       formData.append("category", form.category);
       formData.append("stock", form.stock);
 
-      if (imageFile) {
-        formData.append("images", imageFile);
-      } else {
-        formData.append("existingImage", form.image);
+      if (imageFiles.length > 0) {
+        imageFiles.forEach((file) => formData.append("images", file));
       }
+      (form.images || [])
+        .filter((image) => !image.startsWith("blob:"))
+        .forEach((image) => formData.append("existingImage", image));
 
       await api.put(`/admin/update/${id}`, formData);
       alert("Product updated!");
       navigate("/admin/products");
     } catch (error) {
-      setErrorMessage(error.response?.data?.message || "Unable to update product");
+      setErrorMessage(
+        error.response?.data?.message || error.message || "Unable to update product"
+      );
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -117,7 +136,7 @@ export default function EditProduct() {
               <input
                 key={key}
                 name={key}
-                value={form[key]}
+                value={form[key] || ""}
                 onChange={handleChange}
                 placeholder={key}
                 className="h-12 rounded-xl border border-slate-300 px-4 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600"
@@ -126,13 +145,16 @@ export default function EditProduct() {
 
             <div className="md:col-span-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
               <p className="mb-3 text-sm font-semibold text-slate-700">Product image</p>
-              {form.image ? (
-                <div className="mb-4 flex items-center gap-4">
-                  <img
-                    src={form.image}
-                    alt={form.title || "Product preview"}
-                    className="h-28 w-28 rounded-xl border border-slate-200 bg-white object-contain p-2"
-                  />
+              {form.images?.length > 0 ? (
+                <div className="mb-4 flex flex-wrap items-center gap-4">
+                  {form.images.map((image) => (
+                    <img
+                      key={image}
+                      src={image}
+                      alt={form.title || "Product preview"}
+                      className="h-28 w-28 rounded-xl border border-slate-200 bg-white object-contain p-2"
+                    />
+                  ))}
                   <button
                     type="button"
                     onClick={removeImage}
@@ -147,13 +169,18 @@ export default function EditProduct() {
               <input
                 type="file"
                 accept="image/*"
+                multiple
                 onChange={handleImageChange}
                 className="w-full rounded-xl border border-slate-300 bg-white p-3"
               />
             </div>
 
-            <button className="md:col-span-2 mt-2 h-12 rounded-xl bg-teal-700 text-base font-bold text-white transition hover:bg-teal-800">
-              Update Product
+            <button
+              type="submit"
+              disabled={loading || saving}
+              className="md:col-span-2 mt-2 h-12 rounded-xl bg-teal-700 text-base font-bold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving ? "Updating..." : "Update Product"}
             </button>
           </form>
         </div>

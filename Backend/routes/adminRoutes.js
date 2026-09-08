@@ -26,25 +26,8 @@ router.post('/add', verifyAdmin, upload.array('images', 5), createProduct);
 // router to get all product
 router.get('/',verifyAdmin, getAllProducts); 
 
-// router to update product
-const handleOptionalImages = (req, res, next) => {
-    if (!req.is("multipart/form-data")) {
-        req.files = [];
-        return next();
-    }
-
-    upload.array("images", 1)(req, res, (error) => {
-        if (error) {
-            return res.status(400).json({
-                message: error.message || "Invalid product image upload",
-            });
-        }
-
-        next();
-    });
-};
-
-router.put('/update/:id', verifyAdmin, handleOptionalImages, updateProduct);
+// router to update product (parses both form fields and an optional image)
+router.put('/update/:id', verifyAdmin, upload.array('images', 5), updateProduct);
 
 // router to delete product
 router.delete('/delete/:id', verifyAdmin, deleteProduct);
