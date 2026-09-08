@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../api/axios";
 import { useNavigate } from "react-router";
 
@@ -15,6 +15,23 @@ export default function AddProduct() {
     });
 
     const [errorMessage, setErrorMessage] = useState("");
+    const [categories, setCategories] = useState([]);
+
+    useEffect(() => {
+        const loadCategories = async () => {
+            try {
+                const response = await api.get("/products");
+                const availableCategories = Array.isArray(response.data?.categories)
+                    ? response.data.categories
+                    : [];
+                setCategories(availableCategories);
+            } catch {
+                setCategories([]);
+            }
+        };
+
+        loadCategories();
+    }, []);
 
    const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -111,14 +128,29 @@ export default function AddProduct() {
                             required
                         />
 
-                        <input
-                            type="text"
-                            name="category"
-                            placeholder="Category"
-                            value={form.category}
-                            onChange={handleChange}
-                            className="h-12 rounded-xl border border-slate-300 px-4"
-                        />
+                        <div>
+                            <label htmlFor="category" className="mb-2 block text-sm font-semibold text-slate-700">
+                                Category
+                            </label>
+                            <input
+                                type="text"
+                                id="category"
+                                name="category"
+                                list="product-categories"
+                                placeholder="Choose or type a category"
+                                value={form.category}
+                                onChange={handleChange}
+                                className="h-12 w-full rounded-xl border border-slate-300 px-4"
+                            />
+                            <datalist id="product-categories">
+                                {categories.map((category) => (
+                                    <option key={category} value={category} />
+                                ))}
+                            </datalist>
+                            <p className="mt-1 text-xs text-slate-500">
+                                Existing categories are suggested; new names are saved automatically.
+                            </p>
+                        </div>
 
                         <input
                             type="number"

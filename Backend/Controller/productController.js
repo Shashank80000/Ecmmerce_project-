@@ -157,6 +157,9 @@ export const createProduct = async (req, res) => {
 export const getAllProducts = async (req, res) => {
     try {
         const { search, category } = req.query;
+        const categories = (await Product.distinct("category"))
+            .filter(Boolean)
+            .sort((first, second) => first.localeCompare(second));
 
         let filter = {};
 
@@ -171,7 +174,8 @@ export const getAllProducts = async (req, res) => {
 
             return res.status(200).json({
                 products,
-                similarProducts: []
+                similarProducts: [],
+                categories,
             });
         }
 
@@ -208,6 +212,7 @@ export const getAllProducts = async (req, res) => {
         res.status(200).json({
             products,
             similarProducts,
+            categories,
         });
 
     } catch (error) {

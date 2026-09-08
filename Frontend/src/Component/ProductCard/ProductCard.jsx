@@ -1,5 +1,27 @@
 import { Link, useNavigate } from "react-router";
 
+export function ProductCardSkeleton() {
+  return (
+    <article className="mx-auto w-full max-w-sm overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm" aria-hidden="true">
+      <div className="flex items-center justify-between px-4 py-3 sm:px-6">
+        <div className="h-5 w-2/3 animate-pulse rounded bg-slate-200" />
+        <div className="h-5 w-5 animate-pulse rounded-full bg-slate-200" />
+      </div>
+      <div className="aspect-3/2 w-full animate-pulse bg-slate-200" />
+      <div className="space-y-4 p-4 sm:p-6">
+        <div className="space-y-2">
+          <div className="h-3 w-full animate-pulse rounded bg-slate-200" />
+          <div className="h-3 w-4/5 animate-pulse rounded bg-slate-200" />
+        </div>
+        <div className="flex items-center justify-between gap-4">
+          <div className="h-6 w-20 animate-pulse rounded bg-slate-200" />
+          <div className="h-10 w-24 animate-pulse rounded-md bg-slate-200" />
+        </div>
+      </div>
+    </article>
+  );
+}
+
 export default function ProductCard({ product, onAddToCart }) {
   const navigate = useNavigate();
 
